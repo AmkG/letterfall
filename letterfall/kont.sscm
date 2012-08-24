@@ -53,7 +53,6 @@ define-syntax kdo
     \\
     ! kdo
     !   let v \\ x
-    !   y
     !   body
     !   ...
     ! \\
