@@ -33,7 +33,9 @@ define main(_)
       exit 0
 define kmain $ kdo
   kgtk-start "Letterfall"
-  lift $ display "letterfall!\n"
-  lift $ read-char()
+  loop
+define loop $ kdo
+  wait 50
+  loop
 
 ; vim: set ft=scheme : ;

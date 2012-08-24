@@ -22,6 +22,7 @@ define-module
   :export
   \\
     kgtk-start
+    wait
 
 use-modules
   ;
@@ -47,17 +48,11 @@ define kgtk-start(title)
     set! drawing-area
       make <gtk-drawing-area>
     ;
-    set-events drawing-area
-      '(key-press-evemt)
-    set-events toplevel-window
-      '(key-press-event)
-    ;
     add toplevel-window drawing-area
     ;
-    connect toplevel-window 'delete-event
+    connect toplevel-window 'destroy
       lambda ___
         gtk-main-quit()
-        #f
     ; TODO: connect keyboard event
     ;
     g-idle-add
@@ -69,5 +64,13 @@ define kgtk-start(title)
     ;
     gtk-main()
     exit 0
+
+define wait(ms)
+  kmonad-wrap $ lambda (pass)
+    g-timeout-add ms
+      lambda ()
+        pass '()
+        #f ; disable timer
+    '()
 
 ; vim: set ft=scheme : ;
