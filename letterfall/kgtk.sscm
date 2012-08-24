@@ -23,9 +23,20 @@ define-module
   \\
     kgtk-start
     wait
+    key-available?
+    get-key
+  :use-module
+  \\ letterfall screen
+  :re-export
+  \\
+    cls
+    gotoxy
+    print
+    refresh-screen
 
 use-modules
   ;
+  ice-9 q
   oop goops
   ;
   gnome gobject
@@ -53,14 +64,19 @@ define kgtk-start(title)
     connect toplevel-window 'destroy
       lambda ___
         gtk-main-quit()
-    ; TODO: connect keyboard event
+    connect toplevel-window 'key-press-event
+      key-press-handler
+    connect drawing-area 'key-press-event
+      key-press-handler
     ;
     g-idle-add
       lambda ()
         pass '()
         #f ; don't repeat!
     ;
+    screen-initialize-pre-show toplevel-window drawing-area
     show-all toplevel-window
+    screen-initialize-post-show toplevel-window drawing-area
     ;
     gtk-main()
     exit 0
@@ -72,5 +88,41 @@ define wait(ms)
         pass '()
         #f ; disable timer
     '()
+
+define key-q make-q()
+define key-func #f
+
+define key-available
+  lift $ not $ q-empty? key-q
+
+define get-key
+  kmonad-wrap $ lambda (pass)
+    cond
+      q-empty?(key-q)
+        ; defer it
+        set! key-func pass
+        '()
+      #t
+        ; get it now
+        pass $ deq! key-q
+
+define key-press-handler(_w_ ev)
+  let
+    $ kv $ gdk-event-key:keyval ev
+    cond
+      { kv <= 126 } ; ASCII range
+        ; candidate for handling:
+        ; now determine if we should
+        ; enqueue it or call some
+        ; waiting function
+        cond
+          key-func $ let
+                       $ func $ key-func
+                       set! key-func #f
+                       func $ integer->char kv
+          #t       $ enq! key-q $ integer->char kv
+        #t ; handled it
+      #t
+        #f ; didn't handle it
 
 ; vim: set ft=scheme : ;

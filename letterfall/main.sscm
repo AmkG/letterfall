@@ -35,7 +35,8 @@ define kmain $ kdo
   kgtk-start "Letterfall"
   loop
 define loop $ kdo
-  wait 50
+  let c \\ get-key
+  lift $ write c
   loop
 
 ; vim: set ft=scheme : ;

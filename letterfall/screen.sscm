@@ -1,0 +1,98 @@
+
+; letterfall/screen.sscm - 40x25 8-bit retro screen
+; Copyright (C) 2012 Alan Manuel K. Gloria
+;
+; This file is part of Letterfall.
+;
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY, without even the implied warranty of
+; MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+define-module
+  letterfall screen
+  :export
+  \\
+    ; end-user functions
+    cls
+    gotoxy
+    print
+    refresh-screen
+    ; initialization functions
+    ; for integration into letterfall kgtk
+    screen-initialize-pre-show
+    screen-initialize-post-show
+
+use-modules
+  ;
+  oop goops
+  ;
+  gnome gobject
+  gnome glib
+  gnome gtk
+  gnome gtk gdk-event
+  ;
+  letterfall kont
+
+; the screen data already displayed on the window.
+define display-screen
+  make-vector { 40 * 25 } #\space
+; the screen data that was lately put on the
+; window by client code
+define latest-screen
+  make-vector { 40 * 25 } #\space
+
+; cursor location
+define cursor 0
+
+define cls
+  lift $ begin
+    cls-loop 0
+    set! cursor 0
+    '()
+define cls-loop(n) $ cond
+  { n = { 40 * 25 }} $ '()
+  #t                 $ begin
+    vector-set! latest-screen n #\space
+    cls-loop { n + 1 }
+define gotoxy(x y)
+  lift $ begin
+    set! cursor { x + { y * 40 }}
+    '()
+define print(obj) $ cond
+  char?(obj) $ lift $ begin
+    vector-set! latest-screen n obj
+    set! cursor { cursor + 1 }
+    if { cursor >= { 40 * 25 }} $ begin
+      set! cursor 0
+    '()
+  string?(obj) $ print-string obj
+  number?(obj) $ print-string $ format #f "~A" obj
+define print-string(str)
+  print-string-loop str 0 $ string-length str
+define print-string-loop(str i end) $ cond
+  { i = end } $ lift '()
+  #t          $ kdo
+    print $ string-ref str i
+    print-string-loop str { i + 1 } end
+
+define refresh-screen
+  kmonad-wrap $ lambda (pass)
+    ; TODO: draw relevant parts
+    g-idle-add
+      lambda ()
+        pass '()
+define screen-initialize-pre-show(toplevel-window drawing-area)
+  set-size-request drawing-area 480 300
+define screen-initialize-post-show(toplevel-window drawing-area)
+  '() ; TODO
+
+; vim: set ft=scheme : ;
