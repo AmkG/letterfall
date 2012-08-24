@@ -1,0 +1,13 @@
+autom4te.cache
+configure
+config.status
+config.log
+Makefile.top
+Makefile.in
+Makefile
+auxdir
+aclocal.m4
+bin
+letterfall-game
+sscm2scm
+*.sexp

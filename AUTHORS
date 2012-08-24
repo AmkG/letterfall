@@ -1,0 +1,21 @@
+
+Alan Manuel K. Gloria:
+  Started project, almost all files.
+
+Egil Moller, David A. Wheeler, Alan Manuel K. Gloria:
+  Readable S-Expressions Project
+  http://readable.sourceforge.net/
+  entire file readable/kernel.scm
+  Note: this file defines the syntax used by the
+  rest of the package, and is thus considered to
+  be an inherent part of the package; it cannot
+  be easily replaced with a different version as
+  a different version may support an incompatible
+  syntax.
+  Note: Egil Moller's contribution is via SRFI-49,
+  which was used as the basis of readable/kernel.scm
+  SRFI-49
+  http://srfi.schemers.org/srfi-49/srfi-49.html
+  This code is under an MIT license (license text
+  included in file readable/kernel.scm)
+

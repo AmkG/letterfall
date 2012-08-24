@@ -1,0 +1,30 @@
+#! /bin/sh
+
+# script/maketop - script for building Makefile.top, the top part of the Makefile template for Letterfall
+# Copyright (C) 2012 Alan Manuel K. Gloria
+#
+# This file is part of Letterfall
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, without even the implied warranty of
+# MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+srcdir=${1-.}
+
+echo "MY_SSCM_SRC_FILES ="
+(cd ${srcdir}; find letterfall/ -name "*.sscm") | sed -e "s|^|MY_SSCM_SRC_FILES += |"
+echo
+echo "MY_SSCM_SEXP_FILES ="
+(cd ${srcdir}; find letterfall/ -name "*.sscm") | sed -e "s|^|MY_SSCM_SEXP_FILES += |" -e "s|.sscm$|.sexp|"
+echo
+echo "MY_SCM_SRC_FILES ="
+(cd ${srcdir}; find letterfall/ -name "*.scm") | sed -e "s|^|MY_SCM_SRC_FILES += |"

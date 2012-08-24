@@ -1,0 +1,41 @@
+#! /bin/sh
+
+# autoeverything - script for building Makefile.am and configure from scratch
+# Copyright (C) 2012 Alan Manuel K. Gloria
+#
+# This file is part of Letterfall.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, without even the implied warranty of
+# MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+if test $# = 0 || test x$1 != x1; then
+  cat <<MSG
+autoeverything is a script intended to be
+run by maintainers and contributors of the
+code.  In particular, it should generally
+be run only when:
+  You have just pulled the source code
+    straight from the repo.
+  You have just *added* or *removed* a
+    .sscm source file in the letterfall/
+    hierarchy.
+
+To actually run autoeverything, use:
+
+  ./autoeverything 1
+MSG
+  exit 1
+fi
+
+./script/maketop . > Makefile.top
+autoreconf -fi

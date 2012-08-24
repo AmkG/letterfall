@@ -1,0 +1,69 @@
+#! /bin/sh
+IFS=" 	
+"
+exec @GUILE@ -q -s "$0"
+!#
+
+; script/sscm2scm.in - script template for sweet-expression to s-expression conversion
+; Copyright (C) 2012 Alan Manuel K. Gloria
+;
+; This file is part of Letterfall.
+;
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY, without even the implied warranty of
+; MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+; On Guile 2.x, execute on eval-when (compile load eval)
+; On Guile 1.x, remove . from %load-path
+(cond-expand
+  (guile-2
+    (eval-when (compile load eval)
+      (set! %load-path (cons "@srcdir@" %load-path))))
+  (else
+    (set! %load-path
+      (cons "@srcdir@"
+        (let loop ((value %load-path))
+          (cond
+            ((null? value) '())
+            ((string=? (car value) ".")
+              (loop (cdr value)))
+            (#t
+              (cons (car value)
+                    (loop (cdr value))))))))))
+
+(use-modules (readable kernel))
+
+(display "; THIS FILE IS GENERATED FROM A .sscm FILE.\n")
+(display "; It is not considered a source file.\n")
+(let loop ((c (peek-char)))
+  (cond
+    ((eof-object? c)
+      (exit 0))
+    ((char-whitespace? c)
+      (read-char)
+      (display c))
+    ((char=? c #\;)
+      (let comment-loop ((c (read-char)))
+        (cond
+          ((eof-object? c)
+            (newline)
+            (exit 0))
+          ((char=? c #\newline)
+            (newline))
+          (#t
+            (display c)
+            (comment-loop (read-char))))))
+    (#t
+      (let ((v (sweet-read)))
+        (write v)
+        (newline))))
+  (loop (peek-char)))
