@@ -28,6 +28,8 @@ use-modules
   letterfall kgtk
 
 define main(_)
+  ; initialize random number
+  set! *random-state* $ seed->random-state $ car $ gettimeofday()
   execute-kmonad kmain
     lambda ___
       exit 0
@@ -67,19 +69,73 @@ define center(line str) $ kdo
   gotoxy col line
   print str
 
+define initial-speed 500
+define max-speed 30
+
 define play-game $ kdo
   lift '()
   init-screen
   refresh-screen
-  get-key
+  game-loop initial-speed 0
 
 define init-screen $ kdo
   lift '()
   cls
   gotoxy 7 0
   print "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  gotoxy 7 24
+  gotoxy 7 23
   print "--------------------------"
+
+define print-score(score) $ kdo
+  center 24 $ format #f "~A" score
+  refresh-screen
+
+define game-loop(speed score) $ kdo
+  print-score score
+  drop-letter (random 26) speed score
+
+define drop-letter(n speed score)
+  drop-letter-loop { 7 + n } 0 integer->char({ 64 + n + 1 }) speed score
+
+define drop-letter-loop(col line char speed score) $ kdo
+  let check \\ key-available?
+  if check
+     kdo
+       let k \\ get-key
+       if { char-toupper(k) char=? char }
+          kdo
+            ; a hit! a palpable hit!
+            gotoxy col line
+            print " "
+            gotoxy col 0
+            print char
+            game-loop improve-speed(speed score) { score + 1 }
+          kdo
+            ; wrong key; ignore
+            drop-letter-loop col line char speed score
+     kdo
+       ; drop!
+       wait speed
+       gotoxy col line
+       print " "
+       gotoxy col { line + 1 }
+       print char
+       refresh-screen
+       if { line = 22 }
+          ; game over!
+          kdo
+            center 21 "- GAME OVER -"
+            refresh-screen
+          ; keep going...
+          drop-letter-loop col { line + 1 } char speed score
+
+define improve-speed(speed score) $ cond
+  { speed <= max-speed }  $ max-speed
+  #t                      $ max max-speed
+                                inexact->exact $ floor
+                                  {{ speed * 97 } / 100 }
+
+;-----
 
 define char-toupper(c)
   let
