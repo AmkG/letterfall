@@ -36,7 +36,9 @@ define kmain $ kdo
   loop
 define loop $ kdo
   let c \\ get-key
-  lift $ write c
+  gotoxy 0 0
+  print c
+  refresh-screen
   loop
 
 ; vim: set ft=scheme : ;

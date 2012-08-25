@@ -41,6 +41,7 @@ use-modules
   gnome gtk gdk-event
   ;
   letterfall kont
+  letterfall font
 
 ; the screen data already displayed on the window.
 define display-screen
@@ -69,7 +70,7 @@ define gotoxy(x y)
     '()
 define print(obj) $ cond
   char?(obj) $ lift $ begin
-    vector-set! latest-screen n obj
+    vector-set! latest-screen cursor obj
     set! cursor { cursor + 1 }
     if { cursor >= { 40 * 25 }} $ begin
       set! cursor 0
@@ -84,12 +85,16 @@ define print-string-loop(str i end) $ cond
     print $ string-ref str i
     print-string-loop str { i + 1 } end
 
+define the-expose-handler #f
+
 define refresh-screen
   kmonad-wrap $ lambda (pass)
-    ; TODO: draw relevant parts
+    render-loop 0
+    the-expose-handler()
     g-idle-add
       lambda ()
         pass '()
+        #f
 
 ; foreground and background pens
 define back-pen #f
@@ -106,6 +111,7 @@ define screen-initialize-post-show(toplevel-window drawing-area)
       \\
         configure-handler $ make-configure-handler drawing-area
         expose-handler $    make-expose-handler drawing-area
+      set! the-expose-handler expose-handler
       connect drawing-area 'configure-event configure-handler
       connect drawing-area 'expose-event expose-handler
       configure-handler()
@@ -133,12 +139,12 @@ define make-configure-handler(drawing-area)
       set! pixmap $ gdk-pixmap-new window screen-width screen-height -1
       ; clear pixmap
       gdk-draw-rectangle pixmap back-pen 1 0 0 screen-width screen-height
+      ; redraw
+      set! display-screen $ make-vector { 40 * 25 } #\space
+      render-loop 0
     #t
 define make-expose-handler(drawing-area)
   lambda ___
-    draw-point 0 0
-    draw-point 0 1
-    draw-point 160 100
     gdk-draw-drawable
       get-window drawing-area
       back-pen
@@ -150,14 +156,14 @@ define make-expose-handler(drawing-area)
 
 ; virtually draw a single point on the pixmap, with x and y
 ; in a 320x200 screen
-define draw-point(x y)
+define draw-point(x y pen)
   let
     \\
       x-rescaled   $ compute-x x
       y-rescaled   $ compute-y y
       x+1-rescaled $ compute-x { x + 1 }
       y+1-rescaled $ compute-y { y + 1 }
-    gdk-draw-rectangle pixmap fore-pen 1
+    gdk-draw-rectangle pixmap pen 1
       x-rescaled \\ y-rescaled
       max 1 { x+1-rescaled - x-rescaled }
       max 1 { y+1-rescaled - y-rescaled }
@@ -168,5 +174,39 @@ define compute-x(x)
 define compute-y(y)
   inexact->exact $ floor
     {{ screen-height / 2 } + {{ y - 100 } * scaling-factor }}
+
+define render-loop(n) $ cond
+  { n = { 40 * 25 }} $ '() ; end
+  #t                 $ begin
+    let*
+      \\
+        l $ inexact->exact $ floor $ { n / 40 }
+        c $ { n - { l * 40 }}
+      if not{ vector-ref(display-screen n) char=? vector-ref(latest-screen n) } $ begin
+        let*
+          \\
+            char $ vector-ref latest-screen n
+            font $ font-data char
+          vector-set! display-screen n char
+          render-character l c font
+      render-loop { n + 1 }
+define render-character(l c font)
+  render-character-lines { l * 8 } { c * 8 } font 0
+define render-character-lines(base-x base-y font i) $ cond
+  { i = 8 } $ '()
+  #t        $ begin
+    render-character-points base-x base-y vector-ref(font i) 0 i
+    render-character-lines base-x base-y font { i + 1 }
+define render-character-points(base-x base-y line x y) $ cond
+  { x = 8 } $ '()
+  #t        $ begin
+    let
+      $ pen $ if {{ line logand { 2 expt { 7 - x }}} = 0}
+                 back-pen
+                 fore-pen
+      draw-point { base-x + x }
+                 { base-y + y }
+                 pen
+      render-character-points base-x base-y line { x + 1 } y
 
 ; vim: set ft=scheme : ;
