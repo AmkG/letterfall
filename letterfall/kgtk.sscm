@@ -78,6 +78,8 @@ define kgtk-start(title)
     show-all toplevel-window
     screen-initialize-post-show toplevel-window drawing-area
     ;
+    gtk-window-maximize toplevel-window
+    ;
     gtk-main()
     exit 0
 
