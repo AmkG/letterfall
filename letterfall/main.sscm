@@ -33,12 +33,60 @@ define main(_)
       exit 0
 define kmain $ kdo
   kgtk-start "Letterfall"
-  loop
-define loop $ kdo
-  let c \\ get-key
-  gotoxy 0 0
-  print c
+  kmain-loop
+define kmain-loop $ kdo
+  lift '()
+  title-screen
+  play-game
+  kmain-loop
+define title-screen $ kdo
+  lift '()
+  center 8 "LETTERFALL"
+  center 16 "TYPE 'PLAY' TO START"
   refresh-screen
-  loop
+  wait-for-play
+define wait-for-play $ kdo
+  lift '()
+  wait-for-play-loop 17 '(#\P #\L #\A #\Y)
+define wait-for-play-loop(col cs) $ cond
+  null?(cs) $ lift '()
+  #t        $ kdo
+    let c \\ lift $ car cs
+    let k \\ get-key
+    if { char-toupper(k) char=? c }
+       kdo
+         gotoxy col 18
+         print c
+         refresh-screen
+         wait-for-play-loop { col + 1 } $ cdr cs
+       wait-for-play-loop col cs
+
+define center(line str) $ kdo
+  let len \\ lift $ string-length str
+  let col \\ lift $ { 20 - inexact->exact(floor{ len / 2 })}
+  gotoxy col line
+  print str
+
+define play-game $ kdo
+  lift '()
+  init-screen
+  refresh-screen
+  get-key
+
+define init-screen $ kdo
+  lift '()
+  cls
+  gotoxy 7 0
+  print "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  gotoxy 7 24
+  print "--------------------------"
+
+define char-toupper(c)
+  let
+    $ n $ char->integer c
+    cond
+      {{ 96 < n } and { n <= { 96 + 26 }}}
+        integer->char $ { n - 32 }
+      #t $ c
 
 ; vim: set ft=scheme : ;
