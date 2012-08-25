@@ -207,6 +207,6 @@ define render-character-points(basex basey line x y) $ cond
       draw-point { basex + x }
                  { basey + y }
                  pen
-      render-character-points base-x base-y line { x + 1 } y
+      render-character-points basex basey line { x + 1 } y
 
 ; vim: set ft=scheme : ;
