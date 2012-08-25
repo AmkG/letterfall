@@ -159,14 +159,14 @@ define make-expose-handler(drawing-area)
 define draw-point(x y pen)
   let
     \\
-      x-rescaled   $ compute-x x
-      y-rescaled   $ compute-y y
-      x+1-rescaled $ compute-x { x + 1 }
-      y+1-rescaled $ compute-y { y + 1 }
+      rescaled<x>   $ compute-x x
+      rescaled<y>   $ compute-y y
+      rescaled<x+1> $ compute-x { x + 1 }
+      rescaled<y+1> $ compute-y { y + 1 }
     gdk-draw-rectangle pixmap pen 1
-      x-rescaled \\ y-rescaled
-      max 1 { x+1-rescaled - x-rescaled }
-      max 1 { y+1-rescaled - y-rescaled }
+      rescaled<x> \\ rescaled<y>
+      max 1 { rescaled<x+1> - rescaled<x> }
+      max 1 { rescaled<y+1> - rescaled<y> }
 
 define compute-x(x)
   inexact->exact $ floor
@@ -192,20 +192,20 @@ define render-loop(n) $ cond
       render-loop { n + 1 }
 define render-character(l c font)
   render-character-lines { c * 8 } { l * 8 } font 0
-define render-character-lines(base-x base-y font i) $ cond
+define render-character-lines(basex basey font i) $ cond
   { i = 8 } $ '()
   #t        $ begin
-    render-character-points base-x base-y vector-ref(font i) 0 i
-    render-character-lines base-x base-y font { i + 1 }
-define render-character-points(base-x base-y line x y) $ cond
+    render-character-points basex basey vector-ref(font i) 0 i
+    render-character-lines basex basey font { i + 1 }
+define render-character-points(basex basey line x y) $ cond
   { x = 8 } $ '()
   #t        $ begin
     let
       $ pen $ if {{ line logand { 2 expt { 7 - x }}} = 0}
                  back-pen
                  fore-pen
-      draw-point { base-x + x }
-                 { base-y + y }
+      draw-point { basex + x }
+                 { basey + y }
                  pen
       render-character-points base-x base-y line { x + 1 } y
 
