@@ -92,7 +92,7 @@ define wait(ms)
 define key-q make-q()
 define key-func #f
 
-define key-available
+define key-available?
   lift $ not $ q-empty? key-q
 
 define get-key
