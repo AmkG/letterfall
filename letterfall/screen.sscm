@@ -90,9 +90,83 @@ define refresh-screen
     g-idle-add
       lambda ()
         pass '()
+
+; foreground and background pens
+define back-pen #f
+define fore-pen #f
+
 define screen-initialize-pre-show(toplevel-window drawing-area)
   set-size-request drawing-area 480 300
 define screen-initialize-post-show(toplevel-window drawing-area)
-  '() ; TODO
+  let
+    $ style $ get-style toplevel-window
+    set! back-pen $ get-black-gc style
+    set! fore-pen $ get-white-gc style
+    let
+      \\
+        configure-handler $ make-configure-handler drawing-area
+        expose-handler $    make-expose-handler drawing-area
+      connect drawing-area 'configure-event configure-handler
+      connect drawing-area 'expose-event expose-handler
+      configure-handler()
+
+; screen dimensions
+define screen-height #f
+define screen-width #f
+; scaling factor
+define scaling-factor #f
+; pixmap to use
+define pixmap #f
+
+define make-configure-handler(drawing-area)
+  lambda ___
+    let
+      \\
+        window $ get-window drawing-area
+        a      $ get-allocation drawing-area
+      set! screen-width  $ vector-ref a 2
+      set! screen-height $ vector-ref a 3
+      set! scaling-factor
+        min
+          { screen-width / 320 }
+          { screen-height / 200 }
+      set! pixmap $ gdk-pixmap-new window screen-width screen-height -1
+      ; clear pixmap
+      gdk-draw-rectangle pixmap back-pen 1 0 0 screen-width screen-height
+    #t
+define make-expose-handler(drawing-area)
+  lambda ___
+    draw-point 0 0
+    draw-point 0 1
+    draw-point 160 100
+    gdk-draw-drawable
+      get-window drawing-area
+      back-pen
+      pixmap
+      \\ 0 \\ 0
+      \\ 0 \\ 0
+      \\ screen-width \\ screen-height
+    #t
+
+; virtually draw a single point on the pixmap, with x and y
+; in a 320x200 screen
+define draw-point(x y)
+  let
+    \\
+      x-rescaled   $ compute-x x
+      y-rescaled   $ compute-y y
+      x+1-rescaled $ compute-x { x + 1 }
+      y+1-rescaled $ compute-y { y + 1 }
+    gdk-draw-rectangle pixmap fore-pen 1
+      x-rescaled \\ y-rescaled
+      max 1 { x+1-rescaled - x-rescaled }
+      max 1 { y+1-rescaled - y-rescaled }
+
+define compute-x(x)
+  inexact->exact $ floor
+    {{ screen-width / 2 } + {{ x - 160 } * scaling-factor }}
+define compute-y(y)
+  inexact->exact $ floor
+    {{ screen-height / 2 } + {{ y - 100 } * scaling-factor }}
 
 ; vim: set ft=scheme : ;
