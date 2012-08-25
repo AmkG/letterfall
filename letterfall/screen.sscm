@@ -191,7 +191,7 @@ define render-loop(n) $ cond
           render-character l c font
       render-loop { n + 1 }
 define render-character(l c font)
-  render-character-lines { l * 8 } { c * 8 } font 0
+  render-character-lines { c * 8 } { l * 8 } font 0
 define render-character-lines(base-x base-y font i) $ cond
   { i = 8 } $ '()
   #t        $ begin
