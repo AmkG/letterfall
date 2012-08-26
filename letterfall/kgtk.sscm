@@ -117,14 +117,20 @@ define key-press-handler(_w_ ev)
         ; now determine if we should
         ; enqueue it or call some
         ; waiting function
-        cond
-          key-func $ let
-                       $ func $ key-func
-                       set! key-func #f
-                       func $ integer->char kv
-          #t       $ enq! key-q $ integer->char kv
-        #t ; handled it
+        handle-char $ integer->char kv
+      { kv = gdk:Escape }
+        handle-char $ integer->char 27
       #t
         #f ; didn't handle it
+
+define handle-char(c) $ cond
+  key-func $ let
+               $ func $ key-func
+               set! key-func #f
+               func c
+               #t
+  #t       $ begin
+               enq! key-q c
+               #t
 
 ; vim: set ft=scheme : ;

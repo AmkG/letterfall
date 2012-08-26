@@ -33,6 +33,9 @@ define main(_)
   execute-kmonad kmain
     lambda ___
       exit 0
+
+define esc-key $ integer->char 27
+
 define kmain $ kdo
   kgtk-start "Letterfall"
   kmain-loop
@@ -102,14 +105,21 @@ define drop-letter-loop(col line char speed score) $ kdo
   if check
      kdo
        let k \\ get-key
-       if { char-toupper(k) char=? char }
-          kdo
-            ; a hit! a palpable hit!
-            gotoxy col line
-            print " "
-            gotoxy col 0
-            print char
-            game-loop improve-speed(speed score) { score + 1 }
+       cond
+        { char-toupper(k) char=? char }
+        ! kdo
+        !   ; a hit! a palpable hit!
+        !   gotoxy col line
+        !   print " "
+        !   gotoxy col 0
+        !   print char
+        !   game-loop improve-speed(speed score) { score + 1 }
+        { k char=? esc-key }
+        ! kdo
+        !   ; pause the game
+        !   pause col line char
+        !   drop-letter-loop col line char speed score
+        #t
           kdo
             ; wrong key; ignore
             drop-letter-loop col line char speed score
@@ -128,6 +138,21 @@ define drop-letter-loop(col line char speed score) $ kdo
             refresh-screen
           ; keep going...
           drop-letter-loop col { line + 1 } char speed score
+
+define pause(col line char) $ kdo
+  center 8 "- PAUSED -"
+  refresh-screen
+  wait-for-escape
+  center 8 "          "
+  ; replace as it might have gotten erased
+  gotoxy col line
+  print char
+  refresh-screen
+define wait-for-escape $ kdo
+  let k \\ get-key
+  if { k char=? esc-key }
+     lift '()
+     wait-for-escape
 
 define improve-speed(speed score) $ cond
   { speed <= max-speed }  $ max-speed
