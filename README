@@ -5,5 +5,46 @@ Letterfall
 Letterfall is a simple game to improve your typing skills.
 Type the falling letter before it falls all the way down!
 
-TODO: more details
+Installation
+============
+
+This game requires `guile` and `guile-gnome`.
+
+On Ubuntu, as of 12.04, you should install `guile-1.8`,
+`guile-gnome2-dev`, and `guile-gnome2-gtk` (which will
+also install `guile-gnome2-glib`).  Debian is likely to
+have similar packages.
+
+On some distros, Guile can be installed with different
+versions in parallel.  If you then build `(guile gnome)`
+from source, be aware that it will properly work with
+only the particular version you built with.  Letterfall's
+configure script tries to check for `guile-1.8` and
+`guile-2.0` and prefers the versioned names if they work
+with the `(guile gnome)` on your system.
+
+Installing from GitHub
+----------------------
+
+If you clone directly from a source repository, be
+aware that it is not in a state that can be configure'd
+and built.
+
+You will need a reasonably recent version of the Autotools
+and a reasonably recent `find`.  Then execute the
+following:
+
+    ./autoeverything 1
+
+After that, configure and make the usual way.
+
+Sweet Expressions
+=================
+
+This small program was written using "Sweet Expressions."
+This is a new syntax for lists in Lisplike languages.
+
+For more information see the [readable project][RD].
+
+[RD]: http://readable.sourceforge.net/
 
