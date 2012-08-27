@@ -72,14 +72,11 @@ define center(line str) $ kdo
   gotoxy col line
   print str
 
-define initial-speed 500
-define max-speed 30
-
 define play-game $ kdo
   lift '()
   init-screen
   refresh-screen
-  game-loop initial-speed 0
+  game-loop 0 0
 
 define init-screen $ kdo
   lift '()
@@ -89,18 +86,21 @@ define init-screen $ kdo
   gotoxy 7 23
   print "--------------------------"
 
-define print-score(score) $ kdo
-  center 24 $ format #f "~A" score
+define print-score(level score) $ kdo
+  center 24 $ format #f "LVL ~A  SCORE ~A" level score
   refresh-screen
 
-define game-loop(speed score) $ kdo
-  print-score score
-  drop-letter (random 26) speed score
+define game-loop(level score) $ kdo
+  gotoxy 0 0
+  print $ speed-at level
+  print #\space
+  print-score level score
+  drop-letter (random 26) level score
 
-define drop-letter(n speed score)
-  drop-letter-loop { 7 + n } 0 integer->char({ 64 + n + 1 }) speed score
+define drop-letter(n level score)
+  drop-letter-loop { 7 + n } 0 integer->char({ 64 + n + 1 }) level score
 
-define drop-letter-loop(col line char speed score) $ kdo
+define drop-letter-loop(col line char level score) $ kdo
   let check \\ key-available?
   if check
      kdo
@@ -113,19 +113,22 @@ define drop-letter-loop(col line char speed score) $ kdo
         !   print " "
         !   gotoxy col 0
         !   print char
-        !   game-loop improve-speed(speed score) { score + 1 }
+        !   let nscore \\ lift { score + 1 }
+        !   if {{ nscore remainder 10 } = 0 }
+        !      game-loop { level + 1 } nscore
+        !      game-loop level nscore
         { k char=? esc-key }
         ! kdo
         !   ; pause the game
         !   pause col line char
-        !   drop-letter-loop col line char speed score
+        !   drop-letter-loop col line char level score
         #t
           kdo
             ; wrong key; ignore
-            drop-letter-loop col line char speed score
+            drop-letter-loop col line char level score
      kdo
        ; drop!
-       wait speed
+       wait $ speed-at level
        gotoxy col line
        print " "
        gotoxy col { line + 1 }
@@ -137,7 +140,7 @@ define drop-letter-loop(col line char speed score) $ kdo
             center 21 "- GAME OVER -"
             refresh-screen
           ; keep going...
-          drop-letter-loop col { line + 1 } char speed score
+          drop-letter-loop col { line + 1 } char level score
 
 define pause(col line char) $ kdo
   center 8 "- PAUSED -"
@@ -154,11 +157,10 @@ define wait-for-escape $ kdo
      lift '()
      wait-for-escape
 
-define improve-speed(speed score) $ cond
-  { speed <= max-speed }  $ max-speed
-  #t                      $ max max-speed
-                                inexact->exact $ floor
-                                  {{ speed * 97 } / 100 }
+define speed-at(level)
+  inexact->exact $ floor
+    max 25
+        {{ 0.75 expt level } * 400 }
 
 ;-----
 
