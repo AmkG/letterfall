@@ -91,9 +91,6 @@ define print-score(level score) $ kdo
   refresh-screen
 
 define game-loop(level score) $ kdo
-  gotoxy 0 0
-  print $ speed-at level
-  print #\space
   print-score level score
   drop-letter (random 26) level score
 
