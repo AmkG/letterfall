@@ -35,11 +35,87 @@ define main(_)
       exit 0
 
 define esc-key $ integer->char 27
+define backspace-key $ integer->char 8
+define center(line str) $ kdo
+  let len \\ lift $ string-length str
+  let col \\ lift $ { 20 - inexact->exact(floor{ len / 2 })}
+  gotoxy col line
+  print str
 
 define kmain $ kdo
   kgtk-start "Letterfall 2: Numberfall"
   kmain-loop
 define kmain-loop $ kdo
   lift '()
+  let opt \\ title-screen
+  if { opt eq? 'help-option }
+    help-screen
+    play-game
   kmain-loop
+
+define title-screen $ kdo
+  center 8 "LETTERFALL 2: NUMBERFALL"
+  center 14 "TYPE 'PLAY' TO START"
+  center 16 "TYPE 'HELP' FOR INSTRUCTIONS"
+  refresh-screen
+  wait-for-play-or-help
+define wait-for-play-or-help $ kdo
+  lift '()
+  let k-raw \\ get-key
+  let k \\ lift $ char-toupper k-raw
+  cond
+    { k char=? #\P } $ kdo
+      gotoxy 17 18
+      print k
+      refresh-screen
+      wait-for-typein 0 #(#\L #\A #\Y) 'play-option
+    { k char=? #\H } $ kdo
+      gotoxy 17 18
+      print k
+      refresh-screen
+      wait-for-typein 0 #(#\E #\L #\P) 'help-option
+    else             $ wait-for-play-or-help
+define wait-for-typein(i arr ret-val) $ cond
+  { i = vector-length(arr)} $ lift ret-val
+  else                      $ kdo
+    let c \\ lift $ vector-ref arr i
+    let k \\ get-key
+    cond
+      { k char=? backspace-key } $ kdo
+      ! gotoxy { 17 + i} 18
+      ! print " "
+      ! refresh-screen
+      ! if { i = 0 }
+      !   wait-for-play-or-help
+      !   wait-for-typein { i - 1 } arr ret-val
+      { char-toupper(k) char=? c } $ kdo
+      ! gotoxy { 18 + i } 18
+      ! print c
+      ! refresh-screen
+      ! wait-for-typein { i + 1 } arr ret-val
+      else
+      ! wait-for-typein i arr ret-val
+
+define help-screen $ kdo
+  lift '()
+  cls
+  center 2 "help-screen"
+  refresh-screen
+  get-key
+define play-game $ kdo
+  lift '()
+  cls
+  center 2 "play-game"
+  refresh-screen
+  get-key
+
+;-----
+
+define char-toupper(c)
+  let
+    $ n $ char->integer c
+    cond
+      {{ 96 < n } and { n <= { 96 + 26 }}}
+        integer->char $ { n - 32 }
+      #t $ c
 
