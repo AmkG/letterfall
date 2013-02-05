@@ -25,13 +25,13 @@ EXTRA_DIST += readable/kernel.scm
 # useful scripts
 EXTRA_DIST += autoeverything script/maketop script/my-dirname
 # script sources
-EXTRA_DIST += script/letterfall.in script/sscm2scm.in
+EXTRA_DIST += script/letterfall.in script/numberfall.in script/sscm2scm.in
 # configure checking
 EXTRA_DIST += guile-gnome-test.scm
 
 # Installation: install .scm files as well as driver script
 nobase_pkgdata_DATA = $(MY_SSCM_SEXP_FILES) $(MY_SCM_SRC_FILES)
-bin_SCRIPTS = bin/letterfall-game
+bin_SCRIPTS = bin/letterfall-game bin/numberfall-game
 
 # Script replacement
 GUILE = @GUILE@
@@ -62,6 +62,10 @@ bin/letterfall-game : script/letterfall.in Makefile
 	$(MKDIR_P) $(builddir)/bin
 	$(MY_INSTALL_SUBST) < $(srcdir)/script/letterfall.in > $(builddir)/bin/letterfall-game
 	chmod +x $(builddir)/bin/letterfall-game
+bin/numberfall-game : script/numberfall.in Makefile
+	$(MKDIR_P) $(builddir)/bin
+	$(MY_INSTALL_SUBST) < $(srcdir)/script/numberfall.in > $(builddir)/bin/numberfall-game
+	chmod +x $(builddir)/bin/numberfall-game
 
 # Build-directory-only scripts
 sscm2scm : script/sscm2scm.in Makefile
@@ -70,9 +74,12 @@ sscm2scm : script/sscm2scm.in Makefile
 letterfall-game : script/letterfall.in Makefile
 	$(MY_LOCAL_SUBST) < $(srcdir)/script/letterfall.in > $(builddir)/letterfall-game
 	chmod +x $(builddir)/letterfall-game
+numberfall-game : script/numberfall.in Makefile
+	$(MY_LOCAL_SUBST) < $(srcdir)/script/numberfall.in > $(builddir)/numberfall-game
+	chmod +x $(builddir)/numberfall-game
 
 # Default build dependencies
-all : $(MY_SSCM_SEXP_FILES) bin/letterfall-game sscm2scm letterfall-game
+all : $(MY_SSCM_SEXP_FILES) bin/letterfall-game bin/numberfall-game sscm2scm letterfall-game numberfall-game
 
 # Cleanup
-MOSTLYCLEANFILES = $(MY_SSCM_SEXP_FILES) bin/letterfall-game sscm2scm letterfall-game
+MOSTLYCLEANFILES = $(MY_SSCM_SEXP_FILES) bin/letterfall-game bin/numberfall-game sscm2scm letterfall-game numberfall-game

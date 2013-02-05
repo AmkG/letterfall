@@ -1,0 +1,55 @@
+#! /bin/sh
+IFS=" 	
+"
+GUILE_WARN_DEPRECATED=no
+export GUILE_WARN_DEPRECATED
+if test $# = 0; then
+  exec @GUILE@ --use-srfi=9 -q -s "$0"
+else
+  exec @GUILE@ --use-srfi=9 -q -s "$0" "$@"
+fi
+!#
+
+; script/letterfall.in - script template for Letterfall execution
+; Copyright (C) 2012 Alan Manuel K. Gloria
+;
+; This file is part of Letterfall.
+;
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY, without even the implied warranty of
+; MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+; On Guile 2.x, execute on eval-when (compile load eval)
+; On Guile 1.x, remove . from %load-path
+(cond-expand
+  (guile-2
+    (eval-when (compile load eval)
+      (set! %load-path (cons "@pkgdatadir@" %load-path))
+      (set! %load-extensions (cons ".sexp" %load-extensions))))
+  (else
+    (set! %load-path
+      (cons "@pkgdatadir@"
+        (let loop ((value %load-path))
+          (cond
+            ((null? value) '())
+            ((string=? (car value) ".")
+              (loop (cdr value)))
+            (#t
+              (cons (car value)
+                    (loop (cdr value))))))))
+    (set! %load-extensions (cons ".sexp" %load-extensions))))
+
+(use-modules (gnome-2))
+
+(use-modules (letterfall numberfall))
+(main (command-line))
+

@@ -9,5 +9,6 @@ auxdir
 aclocal.m4
 bin
 letterfall-game
+numberfall-game
 sscm2scm
 *.sexp
