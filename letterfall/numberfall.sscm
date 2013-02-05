@@ -99,9 +99,34 @@ define wait-for-typein(i arr ret-val) $ cond
 define help-screen $ kdo
   lift '()
   cls
-  center 2 "help-screen"
+  center 0  "LETTERFALL 2: NUMBERFALL"
+  center 1  "------------------------"
+  ;          |--------------------------------------|
+  center 3  "IN THE PREVIOUS EPISODE YOU CONQUERED"
+  center 4  "THE LETTERS.  THEY HAVE JOINED OUR"
+  center 5  "NOBLE CAUSE UNDER THE CONTROL OF YOUR"
+  center 6  "ALL POWERFUL TOOL: THE KEYBOARD!"
+  ;
+  center 8  "BUT THE NUMBERS HAVE DECLARED WAR!"
+  ;
+  center 10 "USE YOUR KEYBOARD TO COMMAND YOUR"
+  center 11 "LETTER MINIONS TO ATTACK INVADING"
+  center 12 "NUMBERS.  TAP NUMBER KEYS TO ORDER"
+  center 13 "DIRECT HITS FROM YOUR TWO SNIPERS ON"
+  center 14 "SPECIFIC INVADING NUMBERS."
+  ;          |--------------------------------------|
+  center 16 "ALLOCATE YOUR RESOURCES CAREFULLY:"
+  center 17 "LETTERS TAKE TIME TO RELOAD.  AND YOUR"
+  center 18 "TWO SNIPERS TAKE EVEN LONGER TO RELOAD."
+  ;
+  center 20 "IF A NUMBER LANDS IT WILL DESTROY THE"
+  center 21 "LETTER THERE PERMANENTLY.  IF IT LANDS"
+  center 22 "ON A DESTROYED LETTER: YOU LOSE!"
+  ;
+  center 24 "GOOD LUCK TYPIST!"
   refresh-screen
   get-key
+  cls
 define play-game $ kdo
   lift '()
   cls
