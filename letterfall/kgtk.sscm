@@ -120,6 +120,10 @@ define key-press-handler(_w_ ev)
         handle-char $ integer->char kv
       { kv = gdk:Escape }
         handle-char $ integer->char 27
+      { kv = gdk:BackSpace }
+        handle-char $ integer->char 8
+      { kv = gdk:Return }
+        handle-char $ integer->char 13
       #t
         #f ; didn't handle it
 
