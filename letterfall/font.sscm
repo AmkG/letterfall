@@ -376,6 +376,46 @@ define apos-font
       #b00000000
 define space-font
   make-vector 8 #b00000000
+define colon-font
+    vector
+      #b00000000 ; :
+      #b00000000
+      #b00011100
+      #b00011100
+      #b00000000
+      #b00011100
+      #b00011100
+      #b00000000
+define asterisk-font
+    vector
+      #b00001000 ; *
+      #b00101010
+      #b00011100
+      #b01111111
+      #b00011100
+      #b00101010
+      #b00001000
+      #b00000000
+define bang-font
+    vector
+      #b00011000 ; !
+      #b00011000
+      #b00011000
+      #b00011000
+      #b00000000
+      #b00011000
+      #b00011000
+      #b00000000
+define dot-font
+    vector
+      #b00000000 ; .
+      #b00000000
+      #b00000000
+      #b00000000
+      #b00000000
+      #b00011000
+      #b00011000
+      #b00000000
 
 define font-data(c)
   let
@@ -391,6 +431,14 @@ define font-data(c)
         dash-font
       { c char=? #\' }
         apos-font
+      { c char=? #\: }
+        colon-font
+      { c char=? #\* }
+        asterisk-font
+      { c char=? #\! }
+        bang-font
+      { c char=? #\. }
+        dot-font
       #t
         space-font
 
