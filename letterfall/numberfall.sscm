@@ -26,6 +26,8 @@ define-module
 use-modules
   letterfall kont
   letterfall kgtk
+  ;
+  srfi srfi-9
 
 define main(_)
   ; initialize random number
@@ -127,14 +129,204 @@ define help-screen $ kdo
   refresh-screen
   get-key
   cls
+
 define play-game $ kdo
   lift '()
-  cls
-  center 2 "play-game"
+  let state \\ lift initial-state()
+  complete-render state
+  game-loop state
+
+define-record-type <game-state>
+  game-state pressure letters sniper1 sniper2 numbers
+  game-state?
+  pressure pressure-state set-pressure-state!
+  letters  letters-state
+  sniper1  sniper1-state  set-sniper1-state!
+  sniper2  sniper2-state  set-sniper2-state!
+  numbers  numbers-state
+define-record-type <falling-number>
+  falling-number speed time number
+  falling-number?
+  speed  speed-number
+  time   time-number   set-time-number!
+  number actual-number
+
+; state slots meaning:
+; pressure - a steadily-rising number (the score)
+;   which indicates how difficult to make the game
+;   for the player, or #f if the game is over.
+; letters - a 26-item vector.  Item 0 = A and so on.
+;   Contains the row number that the letter is
+;   currently in, or a negative number while
+;   reloading, or #f if letter has been destroyed.
+; sniper1, sniper2 - either #f (ready) or a number
+;   while reloading.
+; numbers - a 26 x 24 vector.  Each vector item is
+;   either #f (meaning nothing at that location),
+;   or a <falling-number>.
+;
+; falling-number slots meaning:
+; speed - how many clock ticks this number takes to
+;   fall to the next level.
+; time - how many more clock ticks remaining before
+;   this number goes to the next level.
+; number - the actual number
+
+define numbers-size { 26 * 24 }
+define initial-state()
+  game-state
+    ; pressure
+      0
+    ; letters
+      make-vector 26 '24
+    ; sniper1
+      #f
+    ; sniper2
+      #f
+    ; numbers
+      make-vector numbers-size '#f
+
+define game-loop(st) $ kdo
+  lift '()
+  wait 25 ; fixed clock ticks
+  ;
+  ; get the key
+  let k-raw \\ try-get-key
+  let k \\ lift $ and k-raw
+                      char-toupper k-raw
+  ;
+  ; handle letters
+  let letters \\ lift $ letters-state st
+  for-i-k 26 $ lambda (i)
+    let
+      \\
+        letter $ vector-ref letters i
+        char   $ integer->char { 65 + i }
+      cond
+        ; letter is dead?
+        not(letter) $ kdo
+        ! ; nothing to do
+        ! lift '()
+        ;
+        ; letter is ready for firing?
+        { letter = 24 } $ kdo
+        ! if { k and { k char=? char }}
+        !   kdo
+        !     lift $ begin
+        !       vector-set! letters i 23
+        !       '()
+        !     gotoxy { 7 + i } 24
+        !     print " "
+        !     gotoxy { 7 + i } 23
+        !     print char
+        !   lift '()
+        ;
+        ; letter is shooting upwards?
+        { letter >= 0 } $ kdo
+        ! gotoxy { 7 + i } letter
+        ! print " "
+        ! ; TODO: check number collision
+        ! if { letter = 0 }
+        !   ; at top, so setup reload time
+        !   kdo
+        !     let limit \\ lift $ {{ pressure-state(st) / 4 } + 1 }
+        !     lift $ begin
+        !       vector-set! letters i -{ 10 + random(limit) }
+        !       '()
+        !   ; go up a step
+        !   kdo
+        !     gotoxy { 7 + i } { letter - 1 }
+        !     print char
+        !     lift $ begin
+        !       vector-set! letters i { letter - 1 }
+        !       '()
+        ;
+        ; letter will now reload?
+        { letter = -1 } $ kdo
+        ! gotoxy { 7 + i } 24
+        ! print char
+        ! lift $ begin
+        !   vector-set! letters i 24
+        !   '()
+        ;
+        ; letter is reloading?
+        else $ kdo
+        ! lift $ begin
+        !   vector-set! letters i { 1 + letter }
+        !   '()
+  ;
+  ; handle snipers
+  ; TODO
+  ;
   refresh-screen
-  get-key
+  game-loop st
+
+; used only to completely render the screen,
+; usually only at start of game or after
+; pausing.
+define complete-render(st) $ kdo
+  cls
+  ; render letters
+  let letters \\ lift $ letters-state st
+  for-i-k 26 $ lambda (i)
+    let
+      $ letter $ vector-ref letters i
+      cond
+        not(letter)     $ kdo
+          gotoxy { 7 + i } 24
+          print "*"
+        { letter >= 0 } $ kdo
+          gotoxy { 7 + i } letter
+          print $ integer->char { 65 + i }
+        else            $ kdo
+          lift '() ; reloading, print nothing
+  ; render snipers
+  let sniper1 \\ lift $ sniper1-state st
+  let sniper2 \\ lift $ sniper2-state st
+  gotoxy 0 24
+  if sniper1
+    print "RELOAD"
+    print "READY/"
+  gotoxy 34 24
+  if sniper2
+    print "RELOAD"
+    print "\\READY"
+  ; render numbers
+  let numbers \\ lift $ numbers-state st
+  for-i-k 26 $ lambda (x)
+    for-i-k 24 $ lambda (y) $ kdo
+      let number \\ lift $ screen-ref numbers x y
+      cond
+        number $ kdo
+          gotoxy { 7 + x } y
+          print $ actual-number number
+        else   $ kdo
+          lift '()
+  ; render game over if needed
+  if pressure-state(st)
+    lift '()
+    center 21 "!!! GAME OVER !!!"
+  refresh-screen
+
+; get a key if available
+define try-get-key $ kdo
+  lift '()
+  let c \\ key-available?
+  if c
+    get-key
+    lift '#f
 
 ;-----
+
+define for-i-k(n kf)
+  define inner(i) $ cond
+    { i = n } $ lift '()
+    else      $ kdo
+      kf i
+      inner { i + 1 }
+  inner 0
+define screen-ref(v x y)
+  vector-ref v { x + { y * 26 }}
 
 define char-toupper(c)
   let
