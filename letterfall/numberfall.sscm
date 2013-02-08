@@ -197,6 +197,7 @@ define game-loop(st) $ kdo
   ;
   ; handle letters
   let letters \\ lift $ letters-state st
+  let numbers \\ lift $ numbers-state st
   for-i-k 26 $ lambda (i)
     let
       \\
@@ -225,21 +226,35 @@ define game-loop(st) $ kdo
         { letter >= 0 } $ kdo
         ! gotoxy { 7 + i } letter
         ! print " "
-        ! ; TODO: check number collision
-        ! if { letter = 0 }
-        !   ; at top, so setup reload time
-        !   kdo
-        !     let limit \\ lift $ {{ pressure-state(st) / 4 } + 1 }
-        !     lift $ begin
-        !       vector-set! letters i -{ 10 + random(limit) }
-        !       '()
-        !   ; go up a step
-        !   kdo
-        !     gotoxy { 7 + i } { letter - 1 }
-        !     print char
-        !     lift $ begin
-        !       vector-set! letters i { letter - 1 }
-        !       '()
+        ! let random-time-limit \\ lift $ max 1 $ inexact->exact $ floor {{ pressure-state(st) / 4 } + 1 }
+        ! let random-time-limit/2 \\ lift $ max 1 $ inexact->exact $ floor { random-time-limit / 2 }
+        ! cond
+        !   screen-ref(numbers i letter) $ kdo
+        !   ! lift $ begin
+        !   !   vector-set! letters i -{ 10 + random(random-time-limit/2)}
+        !   !   screen-set! numbers i letter #f
+        !   !   set-pressure-state! st { pressure-state(st) + 1 }
+        !   !   '()
+        !   { letter = 0 } $ kdo
+        !   ! ; at top, so setup reload time
+        !   ! lift $ begin
+        !   !   vector-set! letters i -{ 10 + random(random-time-limit) }
+        !   !   '()
+        !   screen-ref(numbers i { letter - 1 }) $ kdo
+        !   ! gotoxy { 7 + i } { letter - 1 }
+        !   ! print " "
+        !   ! lift $ begin
+        !   !   vector-set! letters i -{ 10 + random(random-time-limit/2)}
+        !   !   screen-set! numbers i { letter - 1 } #f
+        !   !   set-pressure-state! st { pressure-state(st) + 1 }
+        !   !   '()
+        !   else $ kdo
+        !   ! ; go up a step
+        !   ! gotoxy { 7 + i } { letter - 1 }
+        !   ! print char
+        !   ! lift $ begin
+        !   !   vector-set! letters i { letter - 1 }
+        !   !   '()
         ;
         ; letter will now reload?
         { letter = -1 } $ kdo
@@ -258,8 +273,107 @@ define game-loop(st) $ kdo
   ; handle snipers
   ; TODO
   ;
+  ; handle numbers
+  let number-count \\ lift 0 ; number of surviving numbers found
+  for-i-k 26 $ lambda (x)
+    ; do y traversals in reverse order.  Needed so that lower
+    ; numbers are handled first and falling numbers do not
+    ; inadvertently get handled twice.
+    for-reverse-i-k 24 $ lambda (y) $ kdo
+      let number \\ lift $ screen-ref numbers x y
+      if number
+        kdo
+          ; set number-count
+          lift $ begin
+            set! number-count { number-count + 1 }
+            '()
+          ; check if time to drop the number
+          let time \\ lift $ time-number number
+          if { time = 1 }
+            ; drop now!
+            kdo
+              gotoxy { 7 + x } y
+              print " "
+              drop-number-at st numbers x y
+            ; else update
+            lift $ begin
+              set-time-number! number { time - 1 }
+              '()
+        lift '()
+  ;
+  ; add new numbers
+  ; Always add new numbers if there are no numbers yet.
+  ; Also, add number based on pressure.
+  let current-pressure \\ lift $ pressure-state st
+  cond
+    not(current-pressure) $ lift '()
+    { number-count >= 7 } $ lift '()
+    { { number-count = 0 } or { current-pressure > random{current-pressure + 1000}}} $ kdo
+      let x-number \\ lift
+      ! let*
+      !   \\
+      !   ! x         $ random 26
+      !   ! n         $ random 10
+      !   ! max-speed $ inexact->exact $ floor $ max 4
+      !   !           !   {{ 0.95 expt pressure-state(st)} * 16 }
+      !   ! min-speed $ inexact->exact $ floor $ max 2 $ { max-speed / 2 }
+      !   ! speed     $ { min-speed + random{{max-speed - min-speed} + 1 }}
+      !   ! number    $ falling-number speed speed n
+      !   screen-set! numbers x 0 number
+      !   list x n
+      let x \\ lift $ list-ref x-number 0
+      let n \\ lift $ list-ref x-number 1
+      gotoxy { 7 + x } 0
+      print n
+    else $ lift '()
+  ;
+  ; refresh screen
   refresh-screen
-  game-loop st
+  if pressure-state(st)
+    game-loop st
+    lift '()
+
+define drop-number-at(st numbers x y) $ cond
+  screen-ref(numbers x y) $ kdo
+  ! let number \\ lift $ screen-ref numbers x y
+  ! ; drop it
+  ! cond
+  !   { y = 23 } $ kdo
+  !   ! ; destroy letter or game over
+  !   ! let letters \\ lift $ letters-state st
+  !   ! if vector-ref(letters x)
+  !   !   kdo
+  !   !     lift $ begin
+  !   !       screen-set! numbers x y #f
+  !   !       vector-set! letters x #f
+  !   !       '()
+  !   !     gotoxy { 7 + x } 24
+  !   !     print "*"
+  !   !   kdo
+  !   !     lift $ begin
+  !   !       screen-set! numbers x y #f
+  !   !       set-pressure-state! st #f
+  !   !       '()
+  !   !     complete-render st
+  !   !     gotoxy { 7 + x } 24
+  !   !     print $ actual-number $ number
+  !   !     refresh-screen
+  !   else $ kdo
+  !   ! ; something might be under us, drop it too.
+  !   ! drop-number-at st numbers x { y + 1 }
+  !   ! ; we now know that the lower location is
+  !   ! ; clear, so go into it, clear out our
+  !   ! ; previous location, and reset our time.
+  !   ! let number \\ lift $ screen-ref numbers x y
+  !   ! lift $ begin
+  !   !   screen-set! numbers x { y + 1 } number
+  !   !   screen-set! numbers x y #f
+  !   !   set-time-number! number $ speed-number number
+  !   !   '()
+  !   ! ; update the screen
+  !   ! gotoxy { 7 + x } y         \\ print " "
+  !   ! gotoxy { 7 + x } { y + 1 } \\ print $ actual-number number
+  else $ lift '()
 
 ; used only to completely render the screen,
 ; usually only at start of game or after
@@ -325,8 +439,15 @@ define for-i-k(n kf)
       kf i
       inner { i + 1 }
   inner 0
+define for-reverse-i-k(n kf) $ cond
+  { n <= 0 } $ lift '()
+  else       $ kdo
+    kf { n - 1 }
+    for-reverse-i-k { n - 1 } kf
 define screen-ref(v x y)
   vector-ref v { x + { y * 26 }}
+define screen-set!(v x y nv)
+  vector-set! v {x + { y * 26 }} nv
 
 define char-toupper(c)
   let
