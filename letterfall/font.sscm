@@ -416,6 +416,26 @@ define dot-font
       #b00011000
       #b00011000
       #b00000000
+define slash-font
+    vector
+      #b00000110 ; /
+      #b00001100
+      #b00001100
+      #b00011000
+      #b00110000
+      #b00110000
+      #b01100000
+      #b00000000
+define backslash-font
+    vector
+      #b01100000 ; \
+      #b00110000
+      #b00110000
+      #b00011000
+      #b00001100
+      #b00001100
+      #b00000110
+      #b00000000
 
 define font-data(c)
   let
@@ -439,6 +459,10 @@ define font-data(c)
         bang-font
       { c char=? #\. }
         dot-font
+      { c char=? #\/}
+        slash-font
+      { c char=? #\\}
+        backslash-font
       #t
         space-font
 
