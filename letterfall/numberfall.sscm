@@ -194,10 +194,12 @@ define game-loop(st) $ kdo
   let k-raw \\ try-get-key
   let k \\ lift $ and k-raw
                       char-toupper k-raw
-  ;
-  ; handle letters
+  ; extract items
+  let current-pressure \\ lift $ pressure-state st
   let letters \\ lift $ letters-state st
   let numbers \\ lift $ numbers-state st
+  ;
+  ; handle letters
   for-i-k 26 $ lambda (i)
     let
       \\
@@ -271,7 +273,51 @@ define game-loop(st) $ kdo
         !   '()
   ;
   ; handle snipers
-  ; TODO
+  let snipe \\ lift '#f
+  ; sniper1
+  cond
+    sniper1-state(st) $ kdo
+      if { sniper1-state(st) = 1 }
+        kdo
+          lift $ begin
+            set-sniper1-state! st #f
+            '()
+          gotoxy 0 24
+          print "READY/"
+        lift $ begin
+          set-sniper1-state! st { sniper1-state(st) - 1 }
+          '()
+    { k and char-numeric?(k) } $ kdo
+      gotoxy 0 24
+      print "RELOAD"
+      lift $ begin
+        set-sniper1-state! st { 80 + random{ 1 + current-pressure } }
+        set! snipe { char->integer(k) - 48 }
+        set! k #f ; take the number
+        '()
+    else $ lift '()
+  ; sniper2
+  cond
+    sniper2-state(st) $ kdo
+      if { sniper2-state(st) = 1 }
+        kdo
+          lift $ begin
+            set-sniper2-state! st #f
+            '()
+          gotoxy 34 24
+          print "\\READY"
+        lift $ begin
+          set-sniper2-state! st { sniper2-state(st) - 1 }
+          '()
+    { k and char-numeric?(k) } $ kdo
+      gotoxy 34 24
+      print "RELOAD"
+      lift $ begin
+        set-sniper2-state! st { 80 + random{ 1 + current-pressure } }
+        set! snipe { char->integer(k) - 48 }
+        set! k #f ; take the number
+        '()
+    else $ lift '()
   ;
   ; handle numbers
   let number-count \\ lift 0 ; number of surviving numbers found
@@ -281,8 +327,16 @@ define game-loop(st) $ kdo
     ; inadvertently get handled twice.
     for-reverse-i-k 24 $ lambda (y) $ kdo
       let number \\ lift $ screen-ref numbers x y
-      if number
-        kdo
+      cond
+        { number and snipe and { snipe = actual-number(number) }} $ kdo
+          ; sniped!!
+          gotoxy { 7 + x } y
+          print " "
+          lift $ begin
+            screen-set! numbers x y #f
+            set-pressure-state! st { 1 + pressure-state(st)}
+            '()
+        number $ kdo
           ; set number-count
           lift $ begin
             set! number-count { number-count + 1 }
@@ -299,12 +353,11 @@ define game-loop(st) $ kdo
             lift $ begin
               set-time-number! number { time - 1 }
               '()
-        lift '()
+        else $ lift '()
   ;
   ; add new numbers
   ; Always add new numbers if there are no numbers yet.
   ; Also, add number based on pressure.
-  let current-pressure \\ lift $ pressure-state st
   cond
     not(current-pressure) $ lift '()
     { number-count >= 7 } $ lift '()
@@ -456,4 +509,8 @@ define char-toupper(c)
       {{ 96 < n } and { n <= { 96 + 26 }}}
         integer->char $ { n - 32 }
       #t $ c
+define char-numeric?(c)
+  let
+    $ n $ char->integer c
+    {{ 48 <= n} and { n <= { 48 + 9 }}}
 
